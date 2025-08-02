@@ -28,32 +28,69 @@ namespace Server.Controllers
                     Data = null
                 });
             }
+
+            // Kiểm tra trùng ID (nếu dùng ID do người dùng tạo)
             var existingId = await _context.ThietBiCntts.FirstOrDefaultAsync(tb => tb.Id == request.Id);
             if (existingId != null)
             {
                 return Ok(new ApiResponse<object>
                 {
                     Status = false,
-                    Message = $"Thiết bị đã tồn tại!",
+                    Message = "Thiết bị đã tồn tại!",
                     Data = null
                 });
             }
 
-            // Kiểm tra trùng mã nhân viên
-            var existingNv = await _context.ThietBiCntts
-                .FirstOrDefaultAsync(tb => tb.SerialNumber == request.SerialNumber);
-
-            if (existingNv != null)
+            // Kiểm tra trùng SerialNumber (nếu có nhập)
+            if (!string.IsNullOrWhiteSpace(request.SerialNumber))
             {
-                return Ok(new ApiResponse<object>
+                var existingNv = await _context.ThietBiCntts
+                    .FirstOrDefaultAsync(tb => tb.SerialNumber == request.SerialNumber);
+
+                if (existingNv != null)
                 {
-                    Status = false,
-                    Message = $"Mã thiết bị '{request.SerialNumber}' đã tồn tại!",
-                    Data = null
-                });
+                    return Ok(new ApiResponse<object>
+                    {
+                        Status = false,
+                        Message = $"Mã thiết bị '{request.SerialNumber}' đã tồn tại!",
+                        Data = null
+                    });
+                }
+            }
+             // Kiểm tra trùng SerialNumber (nếu có nhập)
+            if (!string.IsNullOrWhiteSpace(request.SerialNumber))
+            {
+                var existingSr = await _context.ThietBiCntts
+                    .FirstOrDefaultAsync(tb => tb.SerialNumber == request.SerialNumber);
+
+                if (existingSr != null)
+                {
+                    return Ok(new ApiResponse<object>
+                    {
+                        Status = false,
+                        Message = $"Mã thiết bị '{request.SerialNumber}' đã tồn tại!",
+                        Data = null
+                    });
+                }
+            }
+             // Kiểm tra trùng SerialNumber (nếu có nhập)
+            if (!string.IsNullOrWhiteSpace(request.ServiceTag))
+            {
+                var existingSt = await _context.ThietBiCntts
+                    .FirstOrDefaultAsync(tb => tb.ServiceTag == request.ServiceTag);
+
+                if (existingSt != null)
+                {
+                    return Ok(new ApiResponse<object>
+                    {
+                        Status = false,
+                        Message = $"Thiết bị có '{request.ServiceTag}' đã tồn tại!",
+                        Data = null
+                    });
+                }
             }
 
-            //  Tạo mới
+            // Tạo mới thiết bị
             var thietBi = new ThietBiCntt
             {
                 Id = request.Id,
@@ -79,13 +116,13 @@ namespace Server.Controllers
         }
 
 
-        [HttpGet("getTB")]
+        [HttpGet("getTB")]      
         public async Task<IActionResult> GetAllThietBis(
             [FromQuery] DateTime? begind,
             [FromQuery] DateTime? endd,
-            [FromQuery] string sortOrder = "desc")
+            [FromQuery] string sortOrder = "desc",
+            [FromQuery] string? keyword = null)
         {
-            // Lấy ngày mới nhất trong DB
             DateTime? newestTimeRaw = await _context.ThietBiCntts
                 .Where(x => x.NgayNhap.HasValue)
                 .MaxAsync(x => x.NgayNhap);
@@ -102,24 +139,41 @@ namespace Server.Controllers
 
             DateTime newestDate = newestTimeRaw.Value.Date;
             DateTime defaultBegin = newestDate.AddDays(-30);
-
-            // Nếu có truyền thì dùng, không thì lấy mặc định
             DateTime startDate = (begind ?? defaultBegin).Date;
             DateTime endDate = (endd ?? newestDate).Date;
 
-            // Truy vấn thiết bị trong khoảng từ startDate đến endDate
+            // Truy vấn ban đầu theo ngày
             var query = _context.ThietBiCntts
                 .Where(x => x.NgayNhap.HasValue &&
                             x.NgayNhap.Value.Date >= startDate &&
                             x.NgayNhap.Value.Date <= endDate);
+
+            if (!string.IsNullOrWhiteSpace(keyword))
+        {
+            string lowerKeyword = keyword.ToLower();
+
+            query = query.Where(x =>
+                (x.TenThietBi ?? "").ToLower().Contains(lowerKeyword) ||
+                (x.SerialNumber ?? "").ToLower().Contains(lowerKeyword) ||
+                (x.ServiceTag ?? "").ToLower().Contains(lowerKeyword) ||
+                (x.LoaiThietBi ?? "").ToLower().Contains(lowerKeyword) ||
+                (x.TrangThai ?? "").ToLower().Contains(lowerKeyword) ||
+                (x.NguoiQuanLy ?? "").ToLower().Contains(lowerKeyword) ||
+                (x.DonViSuDung ?? "").ToLower().Contains(lowerKeyword)
+            );
+        }
 
             // Sắp xếp
             query = sortOrder.ToLower() == "asc"
                 ? query.OrderBy(x => x.NgayNhap)
                 : query.OrderByDescending(x => x.NgayNhap);
 
-            // Map kết quả
+            // Tổng số lượng (không phân trang)
+            int totalCount = await query.CountAsync();
+
+            
             var result = await query
+                
                 .Select(tb => new ThietBiValidation
                 {
                     Id = tb.Id,
@@ -137,12 +191,10 @@ namespace Server.Controllers
             return Ok(new ApiResponse<List<ThietBiValidation>>
             {
                 Status = true,
-                Message = $"Lấy thiết bị từ {startDate:dd/MM/yyyy} đến {endDate:dd/MM/yyyy}",
+                Message = $"Lấy thiết bị từ {startDate:dd/MM/yyyy} đến {endDate:dd/MM/yyyy} ",
                 Data = result
             });
         }
-
-
 
         [HttpDelete("delete/{id}")]
         public async Task<IActionResult> DeleteThietBi(int id)

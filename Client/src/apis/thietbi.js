@@ -7,13 +7,14 @@ export const apiCreateTB = (data) =>
     data,
   })
 
-export const apiGetTB = (begind, endd) =>
+export const apiGetTB = (begind, endd, keyword) =>
   axios({
     url: '/thietbi/getTB',
     method: 'get',
     params: {
       begind,
       endd,
+      keyword, // thêm từ khóa tìm kiếm vào đây
     },
   })
 

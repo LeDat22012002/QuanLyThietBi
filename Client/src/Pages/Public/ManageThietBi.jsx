@@ -4,11 +4,20 @@ import { FaRegEdit } from 'react-icons/fa'
 import { apiDeleteTB, apiExportExcel, apiGetTB } from '../../apis'
 import moment from 'moment'
 import Swal from 'sweetalert2'
-import { Button, FilterTime, ModalCreateTB, ModalEditTB } from '../../components'
+import { Button, FilterTime, InputForm, ModalCreateTB, ModalEditTB } from '../../components'
 import { useDispatch } from 'react-redux'
 import { showModal } from '../../store/loading/loadingSlice'
 import { toast } from 'react-toastify'
+import UseDebouce from '../../hooks/useDebouce'
+import { useForm } from 'react-hook-form'
 const ManageThietBi = () => {
+  const {
+    register,
+    formState: { errors },
+    // handleSubmit,
+    // reset,
+    watch,
+  } = useForm()
   const [thietbis, setThietbis] = useState(null)
   const [begind, setBegind] = useState(null)
   const [endd, setEndd] = useState(null)
@@ -18,16 +27,17 @@ const ManageThietBi = () => {
   const render = useCallback(() => {
     setUpdate(!update)
   })
+  const queriesDebounce = UseDebouce(watch('q'), 800)
+
   const fetchAllThietBi = async () => {
-    const res = await apiGetTB(begind, endd)
-    console.log(res.data)
-    if (res.status) {
-      setThietbis(res?.data)
+    const res = await apiGetTB(begind, endd, queriesDebounce)
+    if (res?.status) {
+      setThietbis(res.data)
     }
   }
   useEffect(() => {
     fetchAllThietBi()
-  }, [update])
+  }, [begind, endd, update, queriesDebounce])
   const handleCreateTB = () => {
     dispatch(
       showModal({
@@ -36,6 +46,7 @@ const ManageThietBi = () => {
       })
     )
   }
+
   const handleEditTB = (el) => {
     dispatch(
       showModal({
@@ -114,7 +125,6 @@ const ManageThietBi = () => {
   const handleTG = (begindValue, enddValue) => {
     setBegind(begindValue)
     setEndd(enddValue)
-    fetchAllThietBi(begindValue, enddValue)
   }
   return (
     <div className="flex flex-col w-full">
@@ -133,6 +143,19 @@ const ManageThietBi = () => {
             <ImFileExcel />
             <span> Xuất Excel</span>
           </button>
+        </div>
+      </div>
+      <div className="flex flex-col w-full gap-4 p-4">
+        <div className="flex justify-end py-4">
+          <form className="w-[45%]">
+            <InputForm
+              id="q"
+              register={register}
+              errors={errors}
+              fullWith
+              placeholder="Tìm kiếm..."
+            />
+          </form>
         </div>
       </div>
       <table className="w-full mt-10 overflow-hidden text-left border-collapse rounded-lg shadow-md">
