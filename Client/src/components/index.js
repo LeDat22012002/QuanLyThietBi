@@ -8,3 +8,7 @@ export { default as ModalEditTB } from './Modal/ModalEditTB'
 export { default as Loading } from './Common/Loading'
 export { default as Modal } from './Common/Modal'
 export { default as FilterTime } from './FilterTime/FilterTime'
+
+//
+export { default as Pagination } from './Pagination/pagination'
+export { default as PagiItem } from './Pagination/PagiItem'

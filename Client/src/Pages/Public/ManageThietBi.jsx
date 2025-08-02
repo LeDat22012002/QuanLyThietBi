@@ -4,40 +4,76 @@ import { FaRegEdit } from 'react-icons/fa'
 import { apiDeleteTB, apiExportExcel, apiGetTB } from '../../apis'
 import moment from 'moment'
 import Swal from 'sweetalert2'
-import { Button, FilterTime, InputForm, ModalCreateTB, ModalEditTB } from '../../components'
+import {
+  Button,
+  FilterTime,
+  InputForm,
+  ModalCreateTB,
+  ModalEditTB,
+  Pagination,
+} from '../../components'
 import { useDispatch } from 'react-redux'
 import { showModal } from '../../store/loading/loadingSlice'
 import { toast } from 'react-toastify'
 import UseDebouce from '../../hooks/useDebouce'
 import { useForm } from 'react-hook-form'
+import { useSearchParams, useNavigate, useLocation, createSearchParams } from 'react-router-dom'
+
 const ManageThietBi = () => {
   const {
     register,
     formState: { errors },
-    // handleSubmit,
-    // reset,
     watch,
   } = useForm()
+
+  const navigate = useNavigate()
+  const location = useLocation()
+  const [params] = useSearchParams()
+
   const [thietbis, setThietbis] = useState(null)
+  const [counts, setCounts] = useState(0)
   const [begind, setBegind] = useState(null)
   const [endd, setEndd] = useState(null)
-  // const [editNhanVien, setEditNhanVien] = useState(null);
+
   const dispatch = useDispatch()
   const [update, setUpdate] = useState(false)
-  const render = useCallback(() => {
-    setUpdate(!update)
-  })
+  const render = useCallback(() => setUpdate(!update), [update])
+
   const queriesDebounce = UseDebouce(watch('q'), 800)
+  const page = +params.get('page') || 1
+  const limit = +import.meta.env.VITE_LIMIT || 10
+
+  useEffect(() => {
+    const queryObj = {}
+    if (queriesDebounce) queryObj.q = queriesDebounce
+    if (page) queryObj.page = page
+
+    navigate({
+      pathname: location.pathname,
+      search: createSearchParams(queryObj).toString(),
+    })
+  }, [queriesDebounce])
 
   const fetchAllThietBi = async () => {
-    const res = await apiGetTB(begind, endd, queriesDebounce)
+    const query = {
+      begind,
+      endd,
+      page,
+      limit,
+      keyword: params.get('q'),
+    }
+
+    const res = await apiGetTB(query)
     if (res?.status) {
       setThietbis(res.data)
+      setCounts(res.totalItems)
     }
   }
+
   useEffect(() => {
     fetchAllThietBi()
-  }, [begind, endd, update, queriesDebounce])
+  }, [params, update, begind, endd])
+
   const handleCreateTB = () => {
     dispatch(
       showModal({
@@ -51,25 +87,18 @@ const ManageThietBi = () => {
     dispatch(
       showModal({
         isShowModal: true,
-        modalChildren: (
-          <ModalEditTB
-            render={render}
-            editNhanVien={el}
-            // setEditNhanVien={setEditNhanVien}
-          />
-        ),
+        modalChildren: <ModalEditTB render={render} editNhanVien={el} />,
       })
     )
   }
+
   const handleDeleteTB = (id) => {
     Swal.fire({
-      // title: 'Bạn có chắn chắn ?',
       text: 'Bạn có muốn xóa Thiết bị này không ?',
       icon: 'warning',
       showCancelButton: true,
     }).then(async (rs) => {
       if (rs.isConfirmed) {
-        // console.log(id);
         const responseDelete = await apiDeleteTB(id)
         if (responseDelete.status) {
           toast.success(responseDelete.message)
@@ -82,18 +111,9 @@ const ManageThietBi = () => {
   }
 
   const handleExportExcel = async () => {
-    // if (!begind || !endd) {
-    //   toast.warning('Thiếu thời gian!');
-    //   return;
-    // }
-
     try {
       const response = await apiExportExcel(begind, endd)
-
-      //  Đảm bảo response và headers tồn tại
-      if (!response || !response.data) {
-        throw new Error('Không nhận được dữ liệu từ server.')
-      }
+      if (!response || !response.data) throw new Error('Không nhận được dữ liệu')
 
       const blob = new Blob([response.data], {
         type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -102,13 +122,10 @@ const ManageThietBi = () => {
       const url = window.URL.createObjectURL(blob)
       const link = document.createElement('a')
 
-      //  Kiểm tra header tồn tại trước khi đọc
       let fileName = 'Thietbi.xlsx'
       if (response.headers && response.headers['content-disposition']) {
         const match = response.headers['content-disposition'].match(/filename="?(.+?)"?$/)
-        if (match && match[1]) {
-          fileName = decodeURIComponent(match[1])
-        }
+        if (match && match[1]) fileName = decodeURIComponent(match[1])
       }
 
       link.href = url
@@ -122,43 +139,39 @@ const ManageThietBi = () => {
       toast.error('Không xuất được file!')
     }
   }
+
   const handleTG = (begindValue, enddValue) => {
     setBegind(begindValue)
     setEndd(enddValue)
   }
+
   return (
     <div className="flex flex-col w-full">
       <div className="flex items-center justify-between">
-        <div>
-          <Button handleOnclick={handleCreateTB}> Thêm thiết bị</Button>
-        </div>
-        <div>
-          <FilterTime callBackHandle={handleTG} />
-        </div>
-        <div>
-          <button
-            onClick={handleExportExcel}
-            className="px-4 py-2 flex items-center gap-1 text-[14px] text-white font-semibold transition duration-200 bg-green-800 rounded hover:bg-green-900"
-          >
-            <ImFileExcel />
-            <span> Xuất Excel</span>
-          </button>
-        </div>
+        <Button handleOnclick={handleCreateTB}> Thêm thiết bị</Button>
+        <FilterTime callBackHandle={handleTG} />
+        <button
+          onClick={handleExportExcel}
+          className="px-4 py-2 flex items-center gap-1 text-[14px] text-white font-semibold transition duration-200 bg-green-800 rounded hover:bg-green-900"
+        >
+          <ImFileExcel />
+          <span> Xuất Excel</span>
+        </button>
       </div>
-      <div className="flex flex-col w-full gap-4 p-4">
-        <div className="flex justify-end py-4">
-          <form className="w-[45%]">
-            <InputForm
-              id="q"
-              register={register}
-              errors={errors}
-              fullWith
-              placeholder="Tìm kiếm..."
-            />
-          </form>
-        </div>
+
+      <div className="flex justify-end py-4">
+        <form className="w-[45%]">
+          <InputForm
+            id="q"
+            register={register}
+            errors={errors}
+            fullWith
+            placeholder="Tìm kiếm thiết bị..."
+          />
+        </form>
       </div>
-      <table className="w-full mt-10 overflow-hidden text-left border-collapse rounded-lg shadow-md">
+
+      <table className="w-full mt-4 overflow-hidden text-left border-collapse rounded-lg shadow-md">
         <thead className="text-sm text-white uppercase bg-gray-700">
           <tr>
             <th className="px-4 py-2 text-center">STT</th>
@@ -166,7 +179,7 @@ const ManageThietBi = () => {
             <th className="px-4 py-2 ">SerialNumber</th>
             <th className="px-4 py-2 ">ServiceTag</th>
             <th className="px-4 py-2 ">Loại thiết bị</th>
-            <th className="px-4 py-2 ">Đơn vị sử dụng </th>
+            <th className="px-4 py-2 ">Đơn vị sử dụng</th>
             <th className="px-4 py-2 ">Người quản lý</th>
             <th className="px-4 py-2 ">Ngày nhập</th>
             <th className="px-4 py-2 ">Trạng thái</th>
@@ -174,55 +187,51 @@ const ManageThietBi = () => {
           </tr>
         </thead>
         <tbody className="bg-white divide-y divide-gray-300">
-          {thietbis?.map((el, index) => (
-            <tr key={index} className="transition hover:bg-gray-100">
-              <td className="px-4 py-3 text-center ">{index + 1}</td>
-              <td className="px-4 py-3 w-[200px]">
-                <span>{el?.tenThietBi}</span>
-              </td>
-              <td className="px-4 py-3 w-[200px]">
-                <span>{el?.serialNumber}</span>
-              </td>
-              <td className="px-4 py-3 w-[200px]">
-                <span>{el?.serviceTag}</span>
-              </td>
-              <td className="px-4 py-3 w-[200px]">
-                <span>{el?.loaiThietBi}</span>
-              </td>
-              <td className="px-4 py-3 w-[200px]">
-                <span>{el?.donViSuDung}</span>
-              </td>
-              <td className="px-4 py-3 w-[200px]">
-                <span>{el?.nguoiQuanLy}</span>
-              </td>
-              <td className="px-4 py-3 w-[200px]">
-                <span>{el?.ngayNhap ? moment(el.ngayNhap).format('DD/MM/YYYY') : ''}</span>
-              </td>
-              <td className="px-4 py-3 w-[200px]">
-                <span>{el?.trangThai}</span>
-              </td>
-
-              <td className="px-4 py-3 space-x-2 text-center ">
-                <div className="flex items-center justify-center gap-2">
-                  <span
-                    onClick={() => handleEditTB(el)}
-                    className="text-blue-500 cursor-pointer hover:underline hover:text-blue-900"
-                  >
-                    <FaRegEdit size={20} />
-                  </span>
-
-                  <span
-                    onClick={() => handleDeleteTB(el?.id)}
-                    className="text-red-500 cursor-pointer hover:underline hover:text-red-900 "
-                  >
-                    <ImBin size={20} />
-                  </span>
-                </div>
+          {thietbis?.length > 0 ? (
+            thietbis.map((el, index) => (
+              <tr key={el.id} className="transition hover:bg-gray-100">
+                <td className="px-4 py-3 text-center">{(page - 1) * limit + index + 1}</td>
+                <td className="px-4 py-3 w-[200px]">{el?.tenThietBi}</td>
+                <td className="px-4 py-3 w-[200px]">{el?.serialNumber}</td>
+                <td className="px-4 py-3 w-[200px]">{el?.serviceTag}</td>
+                <td className="px-4 py-3 w-[200px]">{el?.loaiThietBi}</td>
+                <td className="px-4 py-3 w-[200px]">{el?.donViSuDung}</td>
+                <td className="px-4 py-3 w-[200px]">{el?.nguoiQuanLy}</td>
+                <td className="px-4 py-3 w-[200px]">
+                  {el?.ngayNhap ? moment(el.ngayNhap).format('DD/MM/YYYY') : ''}
+                </td>
+                <td className="px-4 py-3 w-[200px]">{el?.trangThai}</td>
+                <td className="px-4 py-3 text-center">
+                  <div className="flex items-center justify-center gap-2">
+                    <span
+                      onClick={() => handleEditTB(el)}
+                      className="text-blue-500 cursor-pointer hover:underline hover:text-blue-900"
+                    >
+                      <FaRegEdit size={20} />
+                    </span>
+                    <span
+                      onClick={() => handleDeleteTB(el.id)}
+                      className="text-red-500 cursor-pointer hover:underline hover:text-red-900"
+                    >
+                      <ImBin size={20} />
+                    </span>
+                  </div>
+                </td>
+              </tr>
+            ))
+          ) : (
+            <tr>
+              <td colSpan="10" className="px-4 py-6 italic text-center text-gray-500">
+                Không tìm thấy thiết bị nào phù hợp với tiêu chí lọc.
               </td>
             </tr>
-          ))}
+          )}
         </tbody>
       </table>
+
+      <div className="w-full mt-3">
+        <Pagination totalCount={counts} />
+      </div>
     </div>
   )
 }
