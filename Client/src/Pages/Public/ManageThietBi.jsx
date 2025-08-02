@@ -64,9 +64,13 @@ const ManageThietBi = () => {
     }
 
     const res = await apiGetTB(query)
-    if (res?.status) {
+
+    if (res?.status && Array.isArray(res.data)) {
       setThietbis(res.data)
       setCounts(res.totalItems)
+    } else {
+      setThietbis([])
+      setCounts(0)
     }
   }
 
@@ -187,7 +191,7 @@ const ManageThietBi = () => {
           </tr>
         </thead>
         <tbody className="bg-white divide-y divide-gray-300">
-          {thietbis?.length > 0 ? (
+          {Array.isArray(thietbis) && thietbis.length > 0 ? (
             thietbis.map((el, index) => (
               <tr key={el.id} className="transition hover:bg-gray-100">
                 <td className="px-4 py-3 text-center">{(page - 1) * limit + index + 1}</td>
