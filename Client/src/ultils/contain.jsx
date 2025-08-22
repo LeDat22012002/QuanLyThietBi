@@ -33,7 +33,7 @@ export const HomeSidebar = () => [
     type: 'SINGLE',
     text: 'QUẢN LÝ THIẾT BỊ',
     icon: <TbCircleNumber1Filled size={20} />,
-    path: `${path.LAYOUT}${path.MANAGE_TB}`,
+    path: `/${path.LAYOUT}/${path.MANAGE_TB}`,
   },
   //   ...(current?.idQuyen === 4
   //     ? [

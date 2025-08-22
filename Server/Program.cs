@@ -1,6 +1,6 @@
 using System.Security.Claims;
 using System.Text;
-// using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Server.Models;
@@ -22,33 +22,33 @@ builder.Services.AddCors(options =>
     options.AddPolicy("ClientQLTB",
         policy =>
         {
-            policy.WithOrigins("http://localhost:5174")
+            policy.WithOrigins("http://localhost:5173", "http://10.192.39.114:5173")
                   .AllowAnyHeader()
                   .AllowAnyMethod()
                   .WithExposedHeaders("Content-Disposition"); 
         });
 });
-// builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-//     .AddJwtBearer(options =>
-//     {
-//         options.TokenValidationParameters = new TokenValidationParameters
-//         {
-//             ValidateIssuer = true,
-//             ValidateAudience = false,
-//             ValidateLifetime = true,
-//             ValidateIssuerSigningKey = true,
-//             ValidIssuer = builder.Configuration["Jwt:Issuer"],
-//             IssuerSigningKey = new SymmetricSecurityKey(
-//                 Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!)),
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = false,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!)),
 
-//             ClockSkew = TimeSpan.Zero,
-//             RoleClaimType = ClaimTypes.Role
-//         };
+            ClockSkew = TimeSpan.Zero,
+            RoleClaimType = ClaimTypes.Role
+        };
        
         
-//     });
+    });
 
-// builder.Services.AddAuthorization();
+builder.Services.AddAuthorization();
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();

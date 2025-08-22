@@ -1,6 +1,6 @@
 import { configureStore } from '@reduxjs/toolkit'
-// import storage from 'redux-persist/lib/storage';
-// import userSlice from './user/userSlice';
+import storage from 'redux-persist/lib/storage'
+import userSlice from './user/userSlice'
 import loadingSlice from './loading/loadingSlice'
 // import navReducer from './currentNav/navSlice';
 import {
@@ -13,16 +13,17 @@ import {
   PURGE,
   REGISTER,
 } from 'redux-persist'
+import persistReducer from 'redux-persist/es/persistReducer'
 
-// const commonConfig = {
-//   storage,
-// };
+const commonConfig = {
+  storage,
+}
 
-// const userConfig = {
-//   ...commonConfig,
-//   key: 'NMCD/user',
-//   whitelist: ['isLoggedIn', 'token', 'current', 'refreshtoken'],
-// };
+const userConfig = {
+  ...commonConfig,
+  key: 'QLTB/user',
+  whitelist: ['isLoggedIn', 'token', 'current'],
+}
 
 // const navConfig = {
 //   ...commonConfig,
@@ -33,7 +34,7 @@ import {
 export const store = configureStore({
   reducer: {
     loading: loadingSlice,
-    // user: persistReducer(userConfig, userSlice),
+    user: persistReducer(userConfig, userSlice),
     // nav: persistReducer(navConfig, navReducer),
   },
   middleware: (getDefaultMiddleware) =>

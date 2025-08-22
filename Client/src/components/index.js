@@ -1,5 +1,6 @@
 export { default as Header } from './Header/Header'
 export { default as InputForm } from './Inputs/InputForm'
+export { default as InputField } from './Inputs/InputField'
 export { default as Select } from './Inputs/Select'
 export { default as Button } from './Button/Button'
 export { default as Sidebar } from './Sidebar/Siderbar'
@@ -8,7 +9,7 @@ export { default as ModalEditTB } from './Modal/ModalEditTB'
 export { default as Loading } from './Common/Loading'
 export { default as Modal } from './Common/Modal'
 export { default as FilterTime } from './FilterTime/FilterTime'
-
+export { default as Footer } from './Footer/Footer'
 //
 export { default as Pagination } from './Pagination/pagination'
 export { default as PagiItem } from './Pagination/PagiItem'

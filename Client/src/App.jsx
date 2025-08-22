@@ -2,7 +2,7 @@ import { Route, Routes } from 'react-router-dom'
 import { ToastContainer } from 'react-toastify'
 import path from './ultils/path'
 import { Layout } from './Pages/Layout'
-import { ManageThietBi } from './Pages/Public'
+import { Login, ManageThietBi } from './Pages/Public'
 
 import { useSelector } from 'react-redux'
 import { Modal } from './components'
@@ -14,6 +14,7 @@ function App() {
       {isShowModal && <Modal>{modalChildren}</Modal>}
       <Routes>
         {/* Giao diện chính */}
+        <Route path={path.LOGIN} element={<Login />} />
         <Route path={path.LAYOUT} element={<Layout />}>
           <Route path={path.MANAGE_TB} element={<ManageThietBi />} />
         </Route>

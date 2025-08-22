@@ -1,47 +1,48 @@
 import icons from '../../ultils/icons'
 import avatar from '../../assets/image/account.png'
-import { memo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { memo, useEffect, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 // import { apiLogout } from '../../apis/user';
 // import { toast } from 'react-toastify'
 import path from '../../ultils/path'
 import { FaMessage } from 'react-icons/fa6'
 import { FaBell } from 'react-icons/fa'
 import { IoIosSunny } from 'react-icons/io'
-// import { navigation } from '../../ultils/contain'
-// import { clsx } from 'clsx'
-// import { useDispatch, useSelector } from 'react-redux'
+
+import { useDispatch, useSelector } from 'react-redux'
 // import { setCurrentNav } from '../../store/currentNav/navSlice'
 
-// import { getCurent } from '../../store/user/asyncActions'
+import { getCurent } from '../../store/user/asyncActions'
+import { logout } from '../../store/user/userSlice'
+import { toast } from 'react-toastify'
 
 const { IoMdMenu, FaSortDown } = icons
 const Header = ({ onToggleSidebar }) => {
-  // const navigate = useNavigate()
-  // const dispatch = useDispatch()
+  const navigate = useNavigate()
+  const dispatch = useDispatch()
   const [isShowOption, setIsShowOption] = useState(false)
-  // const { current, isLoggedIn } = useSelector((state) => state.user)
-  // console.log('daaa', current);
-  // const { currentNav } = useSelector((state) => state.nav)
-  // const handleLogout = async () => {
-  //   dispatch(logout())
-  //   navigate(`${path.LOGIN}`)
-  //   toast.success('Logout thành công !')
-  // }
+  const { current, isLoggedIn } = useSelector((state) => state.user)
+  console.log('daaa', current)
+
+  const handleLogout = async () => {
+    dispatch(logout())
+    navigate(`${path.LOGIN}`)
+    toast.success('Logout thành công !')
+  }
   // const handleActive = (value) => {
   //   dispatch(setCurrentNav(value))
   // }
 
-  // useEffect(() => {
-  //   const setTimeoutId = setTimeout(() => {
-  //     if (isLoggedIn) {
-  //       dispatch(getCurent())
-  //     }
-  //   }, 100)
-  //   return () => {
-  //     clearTimeout(setTimeoutId)
-  //   }
-  // }, [dispatch, isLoggedIn])
+  useEffect(() => {
+    const setTimeoutId = setTimeout(() => {
+      if (isLoggedIn) {
+        dispatch(getCurent())
+      }
+    }, 100)
+    return () => {
+      clearTimeout(setTimeoutId)
+    }
+  }, [dispatch, isLoggedIn])
 
   // useEffect(() => {
   //   if (mess)
@@ -112,14 +113,14 @@ const Header = ({ onToggleSidebar }) => {
 
                 <div className="relative z-10">
                   <Link
-                    to={`/${path.MEMBER}/${path.PERSONAL}`}
+                    // to={`/${path.MEMBER}/${path.PERSONAL}`}
                     className="block px-4 py-2 text-gray-800 hover:bg-sky-100 rounded-t-md"
                   >
                     Personal
                   </Link>
 
                   <button
-                    // onClick={handleLogout}
+                    onClick={handleLogout}
                     className="w-full px-4 py-2 text-left text-red-600 hover:bg-red-50 rounded-b-md"
                   >
                     Logout
